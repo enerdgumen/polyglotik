@@ -1,6 +1,6 @@
 import * as Docker from "dockerode";
 import { Container } from "dockerode";
-import { readProject } from "./project";
+import { readProject } from "../project";
 import { NodeProject } from "./node";
 
 export async function run(args: string[]) {
