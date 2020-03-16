@@ -1,4 +1,4 @@
-import { Project } from './config';
+import { Project } from './project';
 
 export interface NodeProject extends Project {
     node: null | {
