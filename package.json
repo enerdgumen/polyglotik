@@ -20,7 +20,9 @@
     "tabWidth": 4
   },
   "dependencies": {
-    "dockerode": "^3.1.0"
+    "dockerode": "^3.1.0",
+    "reflect-metadata": "^0.1.13",
+    "tsyringe": "^4.1.0"
   },
   "devDependencies": {
     "@types/dockerode": "^2.5.24",

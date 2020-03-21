@@ -3,6 +3,8 @@
     "declaration": false,
     "importHelpers": true,
     "module": "commonjs",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "outDir": "lib",
     "rootDir": "src",
     "strict": true,
