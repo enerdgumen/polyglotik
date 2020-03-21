@@ -5,8 +5,14 @@
   "main": "index.js",
   "license": "GPL-3.0-only",
   "scripts": {
+    "commit": "git-cz",
     "build": "tsc",
     "start": "ts-node src/index.ts"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   },
   "husky": {
     "hooks": {
@@ -27,6 +33,7 @@
   "devDependencies": {
     "@types/dockerode": "^2.5.24",
     "@types/node": "^13.9.0",
+    "cz-conventional-changelog": "3.1.0",
     "husky": ">=4",
     "lint-staged": ">=10",
     "prettier": "^1.19.1",
