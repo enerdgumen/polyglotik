@@ -1,29 +1,16 @@
 import { inject, injectable } from "tsyringe";
 import { Engine } from "../engine";
-import { NodeProject } from "./node";
-import { Tool } from "./tool";
+import Node, { NodeProject } from "./node";
 
 @injectable()
-class Yarn implements Tool {
-    constructor(
-        @inject("Engine") private engine: Engine,
-        @inject("Project") private project: NodeProject
-    ) {}
+class Yarn extends Node {
+    command = "yarn";
 
-    async run(args: string[]) {
-        const { name, node } = this.project;
-        const container = await this.engine
-            .newContainer(`polyglotik/${name}/node`, {
-                name: "node",
-                tag: node && node.version
-            })
-            .useHostNetwork()
-            .useHostUser()
-            .useHostWorkingDir()
-            .start("yarn", args);
-        const statusCode = await container.wait();
-        await container.remove();
-        return statusCode;
+    constructor(
+        @inject("Engine") engine: Engine,
+        @inject("Project") project: NodeProject
+    ) {
+        super(engine, project);
     }
 }
 
