@@ -10,7 +10,7 @@ export interface NodeProject extends Project {
 }
 
 @injectable()
-class Node implements Tool {
+export class Node implements Tool {
     command = "node";
 
     constructor(
@@ -35,4 +35,38 @@ class Node implements Tool {
     }
 }
 
-export default Node;
+@injectable()
+export class Npm extends Node {
+    command = "npm";
+
+    constructor(
+        @inject("Engine") engine: Engine,
+        @inject("Project") project: NodeProject
+    ) {
+        super(engine, project);
+    }
+}
+
+@injectable()
+export class Npx extends Node {
+    command = "npx";
+
+    constructor(
+        @inject("Engine") engine: Engine,
+        @inject("Project") project: NodeProject
+    ) {
+        super(engine, project);
+    }
+}
+
+@injectable()
+export class Yarn extends Node {
+    command = "yarn";
+
+    constructor(
+        @inject("Engine") engine: Engine,
+        @inject("Project") project: NodeProject
+    ) {
+        super(engine, project);
+    }
+}
