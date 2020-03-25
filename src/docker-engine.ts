@@ -51,22 +51,28 @@ class DockerContainerBuilder implements ContainerBuilder {
         const { image } = this;
         const { Mounts, NetworkMode, User, WorkingDir } = this;
         const container = await this.docker.createContainer({
+            AttachStdin: true,
             Cmd: [cmd, args].flat(),
             Image: `${image.name}:${image.tag || "latest"}`,
             HostConfig: {
                 NetworkMode,
                 Mounts
             },
+            OpenStdin: true,
+            StdinOnce: true,
             Tty: false,
             User,
             WorkingDir
         });
         const stream = await container.attach({
             stream: true,
+            hijack: true,
+            stdin: true,
             stdout: true,
             stderr: true
         });
         container.modem.demuxStream(stream, process.stdout, process.stderr);
+        process.stdin.pipe(stream);
         await container.start();
         return new DockerContainer(container);
     }
