@@ -3,27 +3,22 @@ import { Engine } from "../engine";
 import { Project } from "../project";
 import { Tool } from "./tool";
 
-export interface NodeProject extends Project {
-    node: null | {
-        version: null | string;
-    };
-}
-
 @injectable()
 export class Node implements Tool {
     command = "node";
 
     constructor(
         @inject("Engine") private engine: Engine,
-        @inject("Project") private project: NodeProject
+        @inject("Project") private project: Project
     ) {}
 
     async run(args: string[]) {
-        const { name, node } = this.project;
+        const { name } = this.project;
+        const { version } = this.project.options("node");
         const container = await this.engine
             .newContainer(`polyglotik/${name}/node`, {
                 name: "node",
-                tag: node && node.version
+                tag: version
             })
             .useHostNetwork()
             .useHostUser()
@@ -41,7 +36,7 @@ export class Npm extends Node {
 
     constructor(
         @inject("Engine") engine: Engine,
-        @inject("Project") project: NodeProject
+        @inject("Project") project: Project
     ) {
         super(engine, project);
     }
@@ -53,7 +48,7 @@ export class Npx extends Node {
 
     constructor(
         @inject("Engine") engine: Engine,
-        @inject("Project") project: NodeProject
+        @inject("Project") project: Project
     ) {
         super(engine, project);
     }
@@ -65,7 +60,7 @@ export class Yarn extends Node {
 
     constructor(
         @inject("Engine") engine: Engine,
-        @inject("Project") project: NodeProject
+        @inject("Project") project: Project
     ) {
         super(engine, project);
     }

@@ -4,14 +4,28 @@ import { join, basename } from "path";
 export interface Project {
     name: string;
     path: string;
+    options(name: string): ToolOptions;
+}
+
+export interface ToolOptions {
+    version: string;
 }
 
 export function readProject(): Project {
     const cwd = process.cwd();
     const conf = readConfig(cwd);
-    conf.name = conf.name || basename(cwd);
-    conf.path = cwd;
-    return conf;
+    return {
+        name: conf.name || basename(cwd),
+        path: cwd,
+        options(name: string) {
+            return Object.assign(
+                {
+                    version: "latest"
+                },
+                conf[name]
+            );
+        }
+    };
 }
 
 function readConfig(path: string): any {
