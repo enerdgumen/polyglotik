@@ -6,9 +6,10 @@ import { ToolDefinitions } from "../src/definitions";
 function generateIndex() {
     const files = glob.sync("./tools/**/*.ts", { cwd: "./src" });
     const tools = files.flatMap(file => {
-        const module = require(`../src/${file}`);
+        const path = file.replace(/\.ts$/, "");
+        const module = require(`../src/${path}`);
         const tools = Object.keys(module);
-        return tools.map(name => ({ path: file, className: name }));
+        return tools.map(name => ({ path, className: name }));
     });
     const index: ToolDefinitions = {};
     tools.forEach(({ path, className }) => {

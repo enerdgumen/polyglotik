@@ -4,27 +4,27 @@ import { ToolDefinitions } from "./definitions";
 
 const definitions: ToolDefinitions = {
     node: {
-        path: "./tools/node.ts",
+        path: "./tools/node",
         className: "Node"
     },
     npm: {
-        path: "./tools/node.ts",
+        path: "./tools/node",
         className: "Npm"
     },
     npx: {
-        path: "./tools/node.ts",
+        path: "./tools/node",
         className: "Npx"
     },
     yarn: {
-        path: "./tools/node.ts",
+        path: "./tools/node",
         className: "Yarn"
     },
     ruby: {
-        path: "./tools/ruby.ts",
+        path: "./tools/ruby",
         className: "Ruby"
     },
     bundle: {
-        path: "./tools/ruby.ts",
+        path: "./tools/ruby",
         className: "Bundle"
     }
 };
