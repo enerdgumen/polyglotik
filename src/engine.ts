@@ -12,6 +12,7 @@ export interface ContainerBuilder {
     useHostWorkingDir(): ContainerBuilder;
     useHostUser(): ContainerBuilder;
     useHostNetwork(): ContainerBuilder;
+    useHostDocker(): ContainerBuilder;
     stdinFrom(stream: NodeJS.ReadableStream): ContainerBuilder;
     stdoutTo(stream: NodeJS.WritableStream): ContainerBuilder;
     stderrTo(stream: NodeJS.WritableStream): ContainerBuilder;

@@ -67,6 +67,17 @@ describe("DockerEngine", () => {
             equal(status, 0);
         });
 
+        it("can connect to host docker", async function() {
+            const [capture, stdout] = captureStream();
+            const container = await engine
+                .newContainer("project", { name: "docker", tag: "19" })
+                .useHostDocker()
+                .stdoutTo(stdout)
+                .start("docker", ["run", "--rm", "busybox:1", "echo", "dog"]);
+            const status = await container.wait();
+            equal(capture.text, "dog\n");
+        });
+
         it("waits and returns the exit status code", async function() {
             const container = await engine
                 .newContainer("project", { name: "busybox", tag: "1" })

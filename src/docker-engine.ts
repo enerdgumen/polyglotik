@@ -1,7 +1,6 @@
 import { injectable } from "tsyringe";
 import * as Docker from "dockerode";
 import { Container, ContainerBuilder, Image, Engine } from "./engine";
-import { ReadStream } from "fs";
 
 @injectable()
 export class DockerEngine implements Engine {
@@ -55,6 +54,16 @@ class DockerContainerBuilder implements ContainerBuilder {
 
     useHostNetwork(): ContainerBuilder {
         this.NetworkMode = "host";
+        return this;
+    }
+
+    useHostDocker(): ContainerBuilder {
+        const path = "/var/run/docker.sock";
+        this.Mounts.push({
+            Type: "bind",
+            Source: path,
+            Target: path
+        });
         return this;
     }
 
