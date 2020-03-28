@@ -1,6 +1,7 @@
 import { injectable } from "tsyringe";
 import * as Docker from "dockerode";
 import { Container, ContainerBuilder, Image, Engine } from "./engine";
+import { ReadStream } from "fs";
 
 @injectable()
 export class DockerEngine implements Engine {
@@ -20,6 +21,11 @@ class DockerContainerBuilder implements ContainerBuilder {
     private User?: string;
     private Mounts: Docker.MountSettings[] = [];
     private WorkingDir?: string;
+    private stdin?: NodeJS.ReadableStream = process.stdin.isTTY
+        ? undefined
+        : process.stdin;
+    private stdout: NodeJS.WritableStream = process.stdout;
+    private stderr: NodeJS.WritableStream = process.stderr;
 
     constructor(
         private docker: Docker,
@@ -47,18 +53,34 @@ class DockerContainerBuilder implements ContainerBuilder {
         return this;
     }
 
+    stdinFrom(stream: NodeJS.ReadableStream): ContainerBuilder {
+        this.stdin = stream;
+        return this;
+    }
+
+    stdoutTo(stream: NodeJS.WritableStream): ContainerBuilder {
+        this.stdout = stream;
+        return this;
+    }
+
+    stderrTo(stream: NodeJS.WritableStream): ContainerBuilder {
+        this.stderr = stream;
+        return this;
+    }
+
     async start(cmd: string, args: string[]): Promise<Container> {
         const { image } = this;
         const { Mounts, NetworkMode, User, WorkingDir } = this;
+        const attachStdin = Boolean(this.stdin);
         const container = await this.docker.createContainer({
-            AttachStdin: true,
+            AttachStdin: attachStdin,
             Cmd: [cmd, args].flat(),
             Image: `${image.name}:${image.tag || "latest"}`,
             HostConfig: {
                 NetworkMode,
                 Mounts
             },
-            OpenStdin: true,
+            OpenStdin: attachStdin,
             StdinOnce: true,
             Tty: false,
             User,
@@ -67,12 +89,14 @@ class DockerContainerBuilder implements ContainerBuilder {
         const stream = await container.attach({
             stream: true,
             hijack: true,
-            stdin: true,
+            stdin: attachStdin,
             stdout: true,
             stderr: true
         });
-        container.modem.demuxStream(stream, process.stdout, process.stderr);
-        process.stdin.pipe(stream);
+        container.modem.demuxStream(stream, this.stdout, this.stderr);
+        if (this.stdin) {
+            this.stdin.pipe(stream);
+        }
         await container.start();
         return new DockerContainer(container);
     }

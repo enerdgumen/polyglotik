@@ -11,6 +11,9 @@ export interface ContainerBuilder {
     useHostWorkingDir(): ContainerBuilder;
     useHostUser(): ContainerBuilder;
     useHostNetwork(): ContainerBuilder;
+    stdinFrom(stream: NodeJS.ReadableStream): ContainerBuilder;
+    stdoutTo(stream: NodeJS.WritableStream): ContainerBuilder;
+    stderrTo(stream: NodeJS.WritableStream): ContainerBuilder;
     start(cmd: string, args: string[]): Promise<Container>;
 }
 
