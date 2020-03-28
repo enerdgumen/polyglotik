@@ -21,17 +21,22 @@ class DockerContainerBuilder implements ContainerBuilder {
     private User?: string;
     private Mounts: Docker.MountSettings[] = [];
     private WorkingDir?: string;
-    private stdin?: NodeJS.ReadableStream = process.stdin.isTTY
-        ? undefined
-        : process.stdin;
-    private stdout: NodeJS.WritableStream = process.stdout;
-    private stderr: NodeJS.WritableStream = process.stderr;
+    private stdin?: NodeJS.ReadableStream;
+    private stdout?: NodeJS.WritableStream;
+    private stderr?: NodeJS.WritableStream;
 
     constructor(
         private docker: Docker,
         private name: string,
         private image: Image
     ) {}
+
+    attachStdStreams(): ContainerBuilder {
+        this.stdin = process.stdin.isTTY ? undefined : process.stdin;
+        this.stdout = process.stdout;
+        this.stderr = process.stderr;
+        return this;
+    }
 
     useHostWorkingDir(): ContainerBuilder {
         this.Mounts.push({
@@ -71,34 +76,41 @@ class DockerContainerBuilder implements ContainerBuilder {
     async start(cmd: string, args: string[]): Promise<Container> {
         const { image } = this;
         const { Mounts, NetworkMode, User, WorkingDir } = this;
-        const attachStdin = Boolean(this.stdin);
         const container = await this.docker.createContainer({
-            AttachStdin: attachStdin,
+            AttachStdin: Boolean(this.stdin),
             Cmd: [cmd, args].flat(),
             Image: `${image.name}:${image.tag || "latest"}`,
             HostConfig: {
                 NetworkMode,
                 Mounts
             },
-            OpenStdin: attachStdin,
+            OpenStdin: Boolean(this.stdin),
             StdinOnce: true,
             Tty: false,
             User,
             WorkingDir
         });
-        const stream = await container.attach({
-            stream: true,
-            hijack: true,
-            stdin: attachStdin,
-            stdout: true,
-            stderr: true
-        });
-        container.modem.demuxStream(stream, this.stdout, this.stderr);
-        if (this.stdin) {
-            this.stdin.pipe(stream);
-        }
+        await this.attachStreams(container);
         await container.start();
         return new DockerContainer(container);
+    }
+
+    private async attachStreams(container: Docker.Container) {
+        if (this.stdin || this.stdout || this.stderr) {
+            const stream = await container.attach({
+                stream: true,
+                hijack: Boolean(this.stdin),
+                stdin: Boolean(this.stdin),
+                stdout: Boolean(this.stdout),
+                stderr: Boolean(this.stderr)
+            });
+            if (this.stdout || this.stderr) {
+                container.modem.demuxStream(stream, this.stdout, this.stderr);
+            }
+            if (this.stdin) {
+                this.stdin.pipe(stream);
+            }
+        }
     }
 }
 

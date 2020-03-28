@@ -20,6 +20,7 @@ export class Node implements Tool {
                 name: "node",
                 tag: version
             })
+            .attachStdStreams()
             .useHostNetwork()
             .useHostUser()
             .useHostWorkingDir()

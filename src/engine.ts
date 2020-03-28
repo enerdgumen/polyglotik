@@ -8,6 +8,7 @@ export interface Engine {
 }
 
 export interface ContainerBuilder {
+    attachStdStreams(): ContainerBuilder;
     useHostWorkingDir(): ContainerBuilder;
     useHostUser(): ContainerBuilder;
     useHostNetwork(): ContainerBuilder;

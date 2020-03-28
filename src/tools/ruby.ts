@@ -20,6 +20,7 @@ export class Ruby implements Tool {
                 name: "ruby",
                 tag: version
             })
+            .attachStdStreams()
             .useHostNetwork()
             .useHostUser()
             .useHostWorkingDir()
