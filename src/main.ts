@@ -10,6 +10,7 @@ async function main() {
     if (!def) throw Error(`Command "${cmd}" not found`);
     const module = await import(def.path);
     const tool = container.resolve<Tool>(module[def.className]);
+    container.resolveAll("Listener");
     const status = await tool.run(args.slice(1));
     process.exit(status);
 }

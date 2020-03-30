@@ -39,6 +39,7 @@
     },
     "dependencies": {
         "dockerode": "^3.1.0",
+        "ora": "^4.0.3",
         "reflect-metadata": "^0.1.13",
         "tsyringe": "^4.1.0"
     },
@@ -47,6 +48,7 @@
         "@types/glob": "^7.1.1",
         "@types/mocha": "^7.0.2",
         "@types/node": "^13.9.0",
+        "@types/ora": "^3.2.0",
         "cz-conventional-changelog": "3.1.0",
         "glob": "^7.1.6",
         "husky": ">=4",

@@ -1,17 +1,19 @@
 import { injectable } from "tsyringe";
 import * as Docker from "dockerode";
+import { EventEmitter } from "events";
 import { Container, ContainerBuilder, Image, Engine } from "./engine";
 
 @injectable()
 export class DockerEngine implements Engine {
-    constructor(private docker: Docker) {}
-
-    static default() {
-        return new DockerEngine(new Docker());
-    }
+    constructor(private docker: Docker, private events: EventEmitter) {}
 
     newContainer(name: string, image: Image): ContainerBuilder {
-        return new DockerContainerBuilder(this.docker, name, image);
+        return new DockerContainerBuilder(
+            this.docker,
+            this.events,
+            name,
+            image
+        );
     }
 }
 
@@ -26,6 +28,7 @@ class DockerContainerBuilder implements ContainerBuilder {
 
     constructor(
         private docker: Docker,
+        private events: EventEmitter,
         private name: string,
         private image: Image
     ) {}
@@ -85,23 +88,62 @@ class DockerContainerBuilder implements ContainerBuilder {
     async start(cmd: string, args: string[]): Promise<Container> {
         const { image } = this;
         const { Mounts, NetworkMode, User, WorkingDir } = this;
-        const container = await this.docker.createContainer({
-            AttachStdin: Boolean(this.stdin),
-            Cmd: [cmd, args].flat(),
-            Image: `${image.name}:${image.tag || "latest"}`,
-            HostConfig: {
-                NetworkMode,
-                Mounts
-            },
-            OpenStdin: Boolean(this.stdin),
-            StdinOnce: true,
-            Tty: false,
-            User,
-            WorkingDir
+        const dockerImage = `${image.name}:${image.tag || "latest"}`;
+        const create = () =>
+            this.docker.createContainer({
+                AttachStdin: Boolean(this.stdin),
+                Cmd: [cmd, args].flat(),
+                Image: dockerImage,
+                HostConfig: {
+                    NetworkMode,
+                    Mounts
+                },
+                OpenStdin: Boolean(this.stdin),
+                StdinOnce: true,
+                Tty: false,
+                User,
+                WorkingDir
+            });
+        const container = await create().catch(err => {
+            if (err.statusCode === 404) {
+                return this.pullImage(dockerImage).then(create);
+            } else {
+                throw err;
+            }
         });
         await this.attachStreams(container);
         await container.start();
         return new DockerContainer(container);
+    }
+
+    private async pullImage(image: string) {
+        return new Promise((resolve, reject) => {
+            this.events.emit("pull-started", { image });
+            const onFinished = (err: Error | null) => {
+                this.events.emit("pull-completed");
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            };
+            const onProgress = (event: any) => {
+                this.events.emit(
+                    "pull-progress",
+                    Object.assign(event, { image })
+                );
+            };
+            this.docker
+                .pull(image, {})
+                .then(stream => {
+                    this.docker.modem.followProgress(
+                        stream,
+                        onFinished,
+                        onProgress
+                    );
+                })
+                .catch(onFinished);
+        });
     }
 
     private async attachStreams(container: Docker.Container) {

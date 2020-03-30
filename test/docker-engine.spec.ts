@@ -1,9 +1,13 @@
 import { equal, notEqual } from "assert";
 import { DockerEngine } from "../src/docker-engine";
 import { Readable, PassThrough } from "stream";
+import * as Docker from "dockerode";
+import { EventEmitter } from "events";
 
 describe("DockerEngine", () => {
-    const engine = DockerEngine.default();
+    const docker = new Docker();
+    const events = new EventEmitter();
+    const engine = new DockerEngine(docker, events);
 
     describe("container", () => {
         it("emits stdout", async function() {
@@ -84,6 +88,19 @@ describe("DockerEngine", () => {
                 .start("false", []);
             const status = await container.wait();
             equal(status, 1);
+        });
+
+        it("can auto-pull a missing image", async function() {
+            this.timeout(15000);
+            let pulled = false;
+            events.on("pull-started", () => (pulled = true));
+            await docker.getImage("busybox:1").remove();
+            const container = await engine
+                .newContainer("project", { name: "busybox", tag: "1" })
+                .start("false", []);
+            const status = await container.wait();
+            equal(status, 1);
+            equal(pulled, true);
         });
     });
 });
