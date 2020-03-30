@@ -1,33 +1,19 @@
 import { inject, injectable } from "tsyringe";
 import { Engine } from "../engine";
 import { Project } from "../project";
-import { Tool } from "./tool";
+import { DockerTool } from "./docker-tool";
 
 @injectable()
-export class Node implements Tool {
+export class Node extends DockerTool {
     command = "node";
+    parent = "node";
+    image = "node";
 
     constructor(
-        @inject("Engine") private engine: Engine,
-        @inject("Project") private project: Project
-    ) {}
-
-    async run(args: string[]) {
-        const { name } = this.project;
-        const { version } = this.project.options("node");
-        const container = await this.engine
-            .newContainer(`polyglotik/${name}/node`, {
-                name: "node",
-                tag: version
-            })
-            .attachStdStreams()
-            .useHostNetwork()
-            .useHostUser()
-            .useHostWorkingDir()
-            .start(this.command, args);
-        const statusCode = await container.wait();
-        await container.remove();
-        return statusCode;
+        @inject("Engine") engine: Engine,
+        @inject("Project") project: Project
+    ) {
+        super(engine, project);
     }
 }
 

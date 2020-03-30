@@ -9,7 +9,9 @@ function generateIndex() {
         const path = file.replace(/\.ts$/, "");
         const module = require(`../src/${path}`);
         const tools = Object.keys(module);
-        return tools.map(name => ({ path, className: name }));
+        return tools
+            .filter(name => !name.endsWith("Tool"))
+            .map(name => ({ path, className: name }));
     });
     const index: ToolDefinitions = {};
     tools.forEach(({ path, className }) => {
