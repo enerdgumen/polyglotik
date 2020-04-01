@@ -1,4 +1,3 @@
-import "reflect-metadata";
 import * as glob from "glob";
 import * as fs from "fs";
 import { ToolDefinitions } from "../src/definitions";

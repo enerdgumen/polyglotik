@@ -1,54 +1,37 @@
-import { inject, injectable } from "tsyringe";
-import { Engine } from "../engine";
-import { Project } from "../project";
+import { WithEngine } from "../engine";
+import { WithProject } from "../project";
 import { DockerTool } from "./docker-tool";
 
-@injectable()
 export class Node extends DockerTool {
     command = "node";
     parent = "node";
     image = "node";
 
-    constructor(
-        @inject("Engine") engine: Engine,
-        @inject("Project") project: Project
-    ) {
-        super(engine, project);
+    constructor(context: WithEngine & WithProject) {
+        super(context);
     }
 }
 
-@injectable()
 export class Npm extends Node {
     command = "npm";
 
-    constructor(
-        @inject("Engine") engine: Engine,
-        @inject("Project") project: Project
-    ) {
-        super(engine, project);
+    constructor(context: WithEngine & WithProject) {
+        super(context);
     }
 }
 
-@injectable()
 export class Npx extends Node {
     command = "npx";
 
-    constructor(
-        @inject("Engine") engine: Engine,
-        @inject("Project") project: Project
-    ) {
-        super(engine, project);
+    constructor(context: WithEngine & WithProject) {
+        super(context);
     }
 }
 
-@injectable()
 export class Yarn extends Node {
     command = "yarn";
 
-    constructor(
-        @inject("Engine") engine: Engine,
-        @inject("Project") project: Project
-    ) {
-        super(engine, project);
+    constructor(context: WithEngine & WithProject) {
+        super(context);
     }
 }

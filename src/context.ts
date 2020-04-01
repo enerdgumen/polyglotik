@@ -1,17 +1,30 @@
-import { container, instanceCachingFactory } from "tsyringe";
 import * as Docker from "dockerode";
 import { EventEmitter } from "events";
-import { Engine } from "./engine";
+import { Engine, WithEngine } from "./engine";
 import { DockerEngine } from "./docker-engine";
-import { Project, readProject } from "./project";
-import { PullListener } from "./listeners/pull-listener";
+import { Project, readProject, WithProject } from "./project";
 
-container.register<Docker>(Docker, { useFactory: () => new Docker() });
-container.register<Engine>("Engine", { useClass: DockerEngine });
-container.register<Project>("Project", { useFactory: readProject });
-container.register(EventEmitter, {
-    useFactory: instanceCachingFactory(() => new EventEmitter())
-});
-container.register("Listener", { useClass: PullListener });
+function lazy<T>(f: () => T): () => T {
+    let value: T;
+    return () => value || (value = f());
+}
 
-export { container };
+class Context implements WithEngine, WithProject {
+    private _engine = lazy(() => new DockerEngine(new Docker(), this.events));
+    private _events = lazy(() => new EventEmitter());
+    private _project = lazy(readProject);
+
+    get engine(): Engine {
+        return this._engine();
+    }
+    get events(): EventEmitter {
+        return this._events();
+    }
+    get project(): Project {
+        return this._project();
+    }
+}
+
+const context = new Context();
+
+export { context };

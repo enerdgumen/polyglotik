@@ -1,6 +1,10 @@
 import { readFileSync } from "fs";
 import { join, basename } from "path";
 
+export interface WithProject {
+    project: Project;
+}
+
 export interface Project {
     name: string;
     path: string;

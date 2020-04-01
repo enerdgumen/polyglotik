@@ -3,6 +3,10 @@ export type Image = {
     tag: string | null;
 };
 
+export interface WithEngine {
+    engine: Engine;
+}
+
 export interface Engine {
     newContainer(name: string, image: Image): ContainerBuilder;
 }

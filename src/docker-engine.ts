@@ -1,9 +1,7 @@
-import { injectable } from "tsyringe";
 import * as Docker from "dockerode";
 import { EventEmitter } from "events";
 import { Container, ContainerBuilder, Image, Engine } from "./engine";
 
-@injectable()
 export class DockerEngine implements Engine {
     constructor(private docker: Docker, private events: EventEmitter) {}
 
