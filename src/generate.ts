@@ -1,6 +1,6 @@
 import * as glob from "glob";
 import * as fs from "fs";
-import { ToolDefinitions } from "../src/definitions";
+import { ToolDefinitions } from "./definitions";
 
 function generateIndex() {
     const files = glob.sync("./tools/**/*.ts", { cwd: "./src" });
