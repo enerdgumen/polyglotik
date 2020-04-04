@@ -19,6 +19,14 @@ const definitions: ToolDefinitions = {
         path: "./tools/node",
         className: "Yarn"
     },
+    python: {
+        path: "./tools/python",
+        className: "Python"
+    },
+    pip: {
+        path: "./tools/python",
+        className: "Pip"
+    },
     ruby: {
         path: "./tools/ruby",
         className: "Ruby"
