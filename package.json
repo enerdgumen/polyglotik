@@ -37,22 +37,22 @@
         "tabWidth": 4
     },
     "dependencies": {
-        "dockerode": "^3.1.0",
+        "dockerode": "^3.2.0",
         "ora": "^4.0.3"
     },
     "devDependencies": {
-        "@types/dockerode": "^2.5.24",
+        "@types/dockerode": "^2.5.26",
         "@types/glob": "^7.1.1",
         "@types/mocha": "^7.0.2",
-        "@types/node": "^13.9.0",
+        "@types/node": "^13.11.0",
         "@types/ora": "^3.2.0",
         "cz-conventional-changelog": "3.1.0",
         "glob": "^7.1.6",
         "husky": ">=4",
-        "lint-staged": ">=10",
+        "lint-staged": "^10.1.1",
         "mocha": "^7.1.1",
-        "prettier": "^1.19.1",
-        "ts-node": "^8.6.2",
+        "prettier": "^2.0.2",
+        "ts-node": "^8.8.1",
         "typescript": "^3.8.3"
     }
 }
