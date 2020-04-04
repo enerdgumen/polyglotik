@@ -5,7 +5,7 @@ import { Container, ContainerBuilder, Image, Engine } from "./engine";
 export class DockerEngine implements Engine {
     constructor(private docker: Docker, private events: EventEmitter) {}
 
-    newContainer(name: string, image: Image): ContainerBuilder {
+    newContainer(name: string | undefined, image: Image): ContainerBuilder {
         return new DockerContainerBuilder(
             this.docker,
             this.events,
@@ -27,7 +27,7 @@ class DockerContainerBuilder implements ContainerBuilder {
     constructor(
         private docker: Docker,
         private events: EventEmitter,
-        private name: string,
+        private name: string | undefined,
         private image: Image
     ) {}
 
@@ -42,7 +42,7 @@ class DockerContainerBuilder implements ContainerBuilder {
         this.Mounts.push({
             Type: "bind",
             Source: process.cwd(),
-            Target: "/work"
+            Target: "/work",
         });
         this.WorkingDir = "/work";
         return this;
@@ -63,7 +63,7 @@ class DockerContainerBuilder implements ContainerBuilder {
         this.Mounts.push({
             Type: "bind",
             Source: path,
-            Target: path
+            Target: path,
         });
         return this;
     }
@@ -95,19 +95,19 @@ class DockerContainerBuilder implements ContainerBuilder {
                 Image: dockerImage,
                 HostConfig: {
                     NetworkMode,
-                    Mounts
+                    Mounts,
                 },
                 OpenStdin: Boolean(this.stdin),
                 StdinOnce: true,
                 Tty: false,
                 User,
-                WorkingDir
+                WorkingDir,
             });
-        const container = await create().catch(err => {
+        const container = await create().catch((err) => {
             if (err.statusCode === 404) {
                 return this.pullImage(dockerImage).then(create);
             }
-                throw err;
+            throw err;
         });
         await this.attachStreams(container);
         await container.start();
@@ -133,7 +133,7 @@ class DockerContainerBuilder implements ContainerBuilder {
             };
             this.docker
                 .pull(image, {})
-                .then(stream => {
+                .then((stream) => {
                     this.docker.modem.followProgress(
                         stream,
                         onFinished,
@@ -151,7 +151,7 @@ class DockerContainerBuilder implements ContainerBuilder {
                 hijack: Boolean(this.stdin),
                 stdin: Boolean(this.stdin),
                 stdout: Boolean(this.stdout),
-                stderr: Boolean(this.stderr)
+                stderr: Boolean(this.stderr),
             });
             if (this.stdout || this.stderr) {
                 container.modem.demuxStream(stream, this.stdout, this.stderr);
@@ -170,6 +170,14 @@ class DockerContainer implements Container {
         process.once("SIGINT", () => this.container.kill());
         const { StatusCode } = await this.container.wait();
         return StatusCode;
+    }
+
+    async waitAndRemove(): Promise<number> {
+        try {
+            return await this.wait();
+        } finally {
+            await this.remove();
+        }
     }
 
     async commit(): Promise<void> {
