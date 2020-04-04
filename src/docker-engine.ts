@@ -106,9 +106,8 @@ class DockerContainerBuilder implements ContainerBuilder {
         const container = await create().catch(err => {
             if (err.statusCode === 404) {
                 return this.pullImage(dockerImage).then(create);
-            } else {
-                throw err;
             }
+                throw err;
         });
         await this.attachStreams(container);
         await container.start();
