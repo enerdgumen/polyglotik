@@ -5,36 +5,36 @@ import { ToolDefinitions } from "./definitions";
 const definitions: ToolDefinitions = {
     node: {
         path: "./tools/node",
-        className: "Node"
+        className: "Node",
     },
     npm: {
         path: "./tools/node",
-        className: "Npm"
+        className: "Npm",
     },
     npx: {
         path: "./tools/node",
-        className: "Npx"
+        className: "Npx",
     },
     yarn: {
         path: "./tools/node",
-        className: "Yarn"
+        className: "Yarn",
     },
     python: {
         path: "./tools/python",
-        className: "Python"
+        className: "Python",
     },
     pip: {
         path: "./tools/python",
-        className: "Pip"
+        className: "Pip",
     },
     ruby: {
         path: "./tools/ruby",
-        className: "Ruby"
+        className: "Ruby",
     },
     bundle: {
         path: "./tools/ruby",
-        className: "Bundle"
-    }
+        className: "Bundle",
+    },
 };
 
 export default definitions;

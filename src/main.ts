@@ -11,10 +11,10 @@ if (args.length === 0) {
     process.exit(102);
 }
 exec(args)
-    .then(status => {
+    .then((status) => {
         process.exit(status);
     })
-    .catch(err => {
+    .catch((err) => {
         console.error(err);
         process.exit(101);
     });

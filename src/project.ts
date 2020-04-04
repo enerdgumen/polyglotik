@@ -22,13 +22,8 @@ export function readProject(): Project {
         name: conf.name || basename(cwd),
         path: cwd,
         options(name: string) {
-            return Object.assign(
-                {
-                    version: "latest"
-                },
-                conf[name]
-            );
-        }
+            return Object.assign({ version: "latest" }, conf[name]);
+        },
     };
 }
 

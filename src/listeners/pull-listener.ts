@@ -8,7 +8,7 @@ export function listenPullEvents(events: EventEmitter) {
             spinner.text = `Pulling ${image}...`;
             spinner.start();
         })
-        .on("pull-progress", event => {
+        .on("pull-progress", (event) => {
             const { image, progressDetail, status } = event;
             if (progressDetail && progressDetail.total) {
                 const { current, total } = progressDetail;

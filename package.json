@@ -5,6 +5,7 @@
     "main": "main.js",
     "license": "GPL-3.0-only",
     "scripts": {
+        "pretty": "prettier --write .",
         "generate": "ts-node src/generate.ts",
         "test": "mocha",
         "commit": "git-cz",

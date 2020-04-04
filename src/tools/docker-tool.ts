@@ -16,7 +16,7 @@ export abstract class DockerTool implements Tool {
         const container = await engine
             .newContainer(`polyglotik-${name}-${this.command}`, {
                 name: this.image,
-                tag: version
+                tag: version,
             })
             .attachStdStreams()
             .useHostNetwork()
