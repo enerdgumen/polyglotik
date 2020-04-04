@@ -3,7 +3,7 @@ import { Tool } from "./tools/tool";
 import { listenPullEvents } from "./listeners/pull-listener";
 import index from "./index";
 
-async function execTool(args: string[]) {
+export async function exec(args: string[]) {
     const cmd = args[0];
     const def = index[cmd];
     if (!def) throw Error(`Command "${cmd}" not found`);
@@ -11,15 +11,4 @@ async function execTool(args: string[]) {
     const tool = new module[def.className](context) as Tool;
     listenPullEvents(context.events);
     return tool.run(args.slice(1));
-}
-
-export function exec(args: string[]) {
-    execTool(args)
-        .then(status => {
-            process.exit(status);
-        })
-        .catch(err => {
-            console.error(err);
-            process.exit(101);
-        });
 }

@@ -10,4 +10,11 @@ if (args.length === 0) {
     console.error("Missing command");
     process.exit(102);
 }
-exec(process.argv.slice(2));
+exec(args)
+    .then(status => {
+        process.exit(status);
+    })
+    .catch(err => {
+        console.error(err);
+        process.exit(101);
+    });
