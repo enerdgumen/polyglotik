@@ -89,6 +89,7 @@ class DockerContainerBuilder implements ContainerBuilder {
         const dockerImage = `${image.name}:${image.tag || "latest"}`;
         const create = () =>
             this.docker.createContainer({
+                name: this.name,
                 AttachStdin: Boolean(this.stdin),
                 Cmd: [cmd, args].flat(),
                 Image: dockerImage,

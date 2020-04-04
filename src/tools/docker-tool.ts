@@ -14,7 +14,7 @@ export abstract class DockerTool implements Tool {
         const { name } = project;
         const { version } = project.options(this.parent);
         const container = await engine
-            .newContainer(`polyglotik/${name}/${this.parent}`, {
+            .newContainer(`polyglotik-${name}-${this.command}`, {
                 name: this.image,
                 tag: version
             })
