@@ -27,6 +27,7 @@ export type StatusCode = number;
 
 export interface Container {
     wait(): Promise<StatusCode>;
+    waitAndRemove(): Promise<StatusCode>;
     commit(): Promise<void>;
     remove(): Promise<void>;
 }
