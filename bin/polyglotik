@@ -1,17 +1,4 @@
-#!/usr/bin/env node
-const { basename } = require("path");
-const { exec } = require("../lib/exec");
-
-function parseArgs(args) {
-    if (args.length === 0) return [];
-    const head = basename(args[0]);
-    const tail = args.slice(1);
-    return head === "polyglotik" ? parseArgs(tail) : [head].concat(tail);
-}
-
-const args = parseArgs(process.argv.slice(1));
-if (args.length === 0) {
-    console.error("Missing arguments");
-    process.exit(102);
-}
-exec(args);
+#!/bin/sh
+dir=`dirname $0`
+name=`basename $0`
+exec "$dir/../node/bin/node" "$dir/../lib/main.js" "$name" "$@"
