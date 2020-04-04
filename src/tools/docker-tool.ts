@@ -23,8 +23,10 @@ export abstract class DockerTool implements Tool {
             .useHostUser()
             .useHostWorkingDir()
             .start(this.command, args);
-        const statusCode = await container.wait();
-        await container.remove();
-        return statusCode;
+        try {
+            return await container.wait();
+        } finally {
+            await container.remove();
+        }
     }
 }
