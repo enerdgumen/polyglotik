@@ -23,6 +23,7 @@ class DockerContainerBuilder implements ContainerBuilder {
     private stdin?: NodeJS.ReadableStream;
     private stdout?: NodeJS.WritableStream;
     private stderr?: NodeJS.WritableStream;
+    private Tty = false;
 
     constructor(
         private docker: Docker,
@@ -32,9 +33,10 @@ class DockerContainerBuilder implements ContainerBuilder {
     ) {}
 
     attachStdStreams(): ContainerBuilder {
-        this.stdin = process.stdin.isTTY ? undefined : process.stdin;
+        this.stdin = process.stdin;
         this.stdout = process.stdout;
         this.stderr = process.stderr;
+        this.Tty = Boolean(process.stdin.isTTY);
         return this;
     }
 
@@ -85,7 +87,7 @@ class DockerContainerBuilder implements ContainerBuilder {
 
     async start(cmd: string, args: string[]): Promise<Container> {
         const { image } = this;
-        const { Mounts, NetworkMode, User, WorkingDir } = this;
+        const { Mounts, NetworkMode, User, WorkingDir, Tty } = this;
         const dockerImage = `${image.name}:${image.tag || "latest"}`;
         const create = () =>
             this.docker.createContainer({
@@ -99,7 +101,7 @@ class DockerContainerBuilder implements ContainerBuilder {
                 },
                 OpenStdin: Boolean(this.stdin),
                 StdinOnce: true,
-                Tty: false,
+                Tty,
                 User,
                 WorkingDir,
             });
@@ -153,7 +155,11 @@ class DockerContainerBuilder implements ContainerBuilder {
                 stdout: Boolean(this.stdout),
                 stderr: Boolean(this.stderr),
             });
-            if (this.stdout || this.stderr) {
+            if (this.Tty) {
+                if (this.stdout) {
+                    stream.pipe(this.stdout);
+                }
+            } else if (this.stdout || this.stderr) {
                 container.modem.demuxStream(stream, this.stdout, this.stderr);
             }
             if (this.stdin) {
