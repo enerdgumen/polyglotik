@@ -9,7 +9,7 @@
         "generate": "ts-node src/generate.ts && prettier --write src/index.ts",
         "test": "mocha",
         "commit": "git-cz",
-        "build": "tsc",
+        "build": "ts-node src/generate.ts && tsc",
         "start": "ts-node src/main.ts"
     },
     "mocha": {

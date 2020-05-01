@@ -1,4 +1,4 @@
-import { WithEngine } from "../engine";
+import { WithEngine, ContainerBuilder } from "../engine";
 import { WithProject } from "../project";
 import { DockerTool } from "./docker-tool";
 

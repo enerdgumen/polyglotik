@@ -8,13 +8,14 @@ function generateIndex() {
         const path = file.replace(/\.ts$/, "");
         const module = require(`../src/${path}`);
         const tools = Object.keys(module);
-        return tools
-            .filter((name) => !name.endsWith("Tool"))
-            .map((name) => ({ path, className: name }));
+        return tools.flatMap((className) => {
+            const { command } = new module[className]();
+            return command ? [{ path, command, className }] : [];
+        });
     });
     const index: ToolDefinitions = {};
-    tools.forEach(({ path, className }) => {
-        index[className.toLowerCase()] = { path, className };
+    tools.forEach(({ className, command, path }) => {
+        index[command] = { path, className };
     });
     const contents = `// This file is auto-generated
 

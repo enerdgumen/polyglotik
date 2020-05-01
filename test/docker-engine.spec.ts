@@ -1,5 +1,6 @@
 import { equal, notEqual } from "assert";
 import { DockerEngine } from "../src/docker-engine";
+import { waitAndRemove } from "../src/containers";
 import { Readable, PassThrough } from "stream";
 import * as Docker from "dockerode";
 import { EventEmitter } from "events";
@@ -16,7 +17,7 @@ describe("DockerEngine", () => {
                 .newContainer(undefined, { name: "busybox", tag: "1" })
                 .stdoutTo(stdout)
                 .start("echo", ["-n", "dog"]);
-            await container.waitAndRemove();
+            await waitAndRemove(container);
             equal(capture.text, "dog");
         });
 
@@ -24,9 +25,10 @@ describe("DockerEngine", () => {
             const [capture, stderr] = captureStream();
             const container = await engine
                 .newContainer(undefined, { name: "busybox", tag: "1" })
+                .whenImageNotFound(engine.pullImage)
                 .stderrTo(stderr)
                 .start("logger", ["-s", "dog"]);
-            await container.waitAndRemove();
+            await waitAndRemove(container);
             equal(capture.text, "root: dog\n");
         });
 
@@ -37,7 +39,7 @@ describe("DockerEngine", () => {
                 .stdinFrom(Readable.from("dog"))
                 .stdoutTo(stdout)
                 .start("cat", []);
-            await container.waitAndRemove();
+            await waitAndRemove(container);
             equal(capture.text, "dog");
         });
 
@@ -47,7 +49,7 @@ describe("DockerEngine", () => {
                 .newContainer(undefined, { name: "busybox", tag: "1" })
                 .stdoutTo(stdout)
                 .start("id", ["-u", "-n"]);
-            await container.waitAndRemove();
+            await waitAndRemove(container);
             equal(capture.text, "root\n");
         });
 
@@ -58,7 +60,7 @@ describe("DockerEngine", () => {
                 .useHostUser()
                 .stdoutTo(stdout)
                 .start("id", ["-u", "-n"]);
-            await container.waitAndRemove();
+            await waitAndRemove(container);
             notEqual(capture.text, "root\n");
         });
 
@@ -67,7 +69,7 @@ describe("DockerEngine", () => {
                 .newContainer(undefined, { name: "busybox", tag: "1" })
                 .useHostWorkingDir()
                 .start("ls", ["package.json"]);
-            const status = await container.waitAndRemove();
+            const status = await waitAndRemove(container);
             equal(status, 0);
         });
 
@@ -78,7 +80,7 @@ describe("DockerEngine", () => {
                 .useHostDocker()
                 .stdoutTo(stdout)
                 .start("docker", ["run", "--rm", "busybox:1", "echo", "dog"]);
-            const status = await container.waitAndRemove();
+            const status = await waitAndRemove(container);
             equal(capture.text, "dog\n");
         });
 
@@ -86,7 +88,7 @@ describe("DockerEngine", () => {
             const container = await engine
                 .newContainer(undefined, { name: "busybox", tag: "1" })
                 .start("false", []);
-            const status = await container.waitAndRemove();
+            const status = await waitAndRemove(container);
             equal(status, 1);
         });
 
@@ -94,11 +96,13 @@ describe("DockerEngine", () => {
             this.timeout(15000);
             let pulled = false;
             events.on("pull-started", () => (pulled = true));
+            const image = { name: "busybox", tag: "1" };
             await docker.getImage("busybox:1").remove();
+            await engine.pullImage(image);
             const container = await engine
-                .newContainer(undefined, { name: "busybox", tag: "1" })
+                .newContainer(undefined, image)
                 .start("false", []);
-            const status = await container.waitAndRemove();
+            const status = await waitAndRemove(container);
             equal(status, 1);
             equal(pulled, true);
         });

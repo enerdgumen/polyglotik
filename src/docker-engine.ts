@@ -1,21 +1,61 @@
 import * as Docker from "dockerode";
 import { EventEmitter } from "events";
-import { Container, ContainerBuilder, Image, Engine } from "./engine";
+import {
+    Container,
+    ContainerBuilder,
+    Image,
+    Engine,
+    ImageNotFoundHandler,
+    ImageBuilder,
+} from "./engine";
+import { removeAfter, waitSuccess } from "./containers";
 
 export class DockerEngine implements Engine {
     constructor(private docker: Docker, private events: EventEmitter) {}
 
     newContainer(name: string | undefined, image: Image): ContainerBuilder {
-        return new DockerContainerBuilder(
-            this.docker,
-            this.events,
-            name,
-            image
-        );
+        return new DockerContainerBuilder(this.docker, name, image);
     }
+
+    newImage(image: Image): ImageBuilder {
+        return new DockerImageBuilder(this, image);
+    }
+
+    // sta nel prototype?!?
+    pullImage = (image: Image): Promise<void> => {
+        const { name, tag } = image;
+        return new Promise((resolve, reject) => {
+            this.events.emit("pull-started", { image });
+            const onFinished = (err: Error | null) => {
+                this.events.emit("pull-completed");
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            };
+            const onProgress = (event: any) => {
+                this.events.emit(
+                    "pull-progress",
+                    Object.assign(event, { image })
+                );
+            };
+            this.docker
+                .pull(`${name}:${tag || "latest"}`, {})
+                .then((stream) => {
+                    this.docker.modem.followProgress(
+                        stream,
+                        onFinished,
+                        onProgress
+                    );
+                })
+                .catch(onFinished);
+        });
+    };
 }
 
 class DockerContainerBuilder implements ContainerBuilder {
+    private Env: string[] = [];
     private NetworkMode?: string;
     private User?: string;
     private Mounts: Docker.MountSettings[] = [];
@@ -24,10 +64,10 @@ class DockerContainerBuilder implements ContainerBuilder {
     private stdout?: NodeJS.WritableStream;
     private stderr?: NodeJS.WritableStream;
     private Tty = false;
+    private notFoundHandler?: ImageNotFoundHandler;
 
     constructor(
         private docker: Docker,
-        private events: EventEmitter,
         private name: string | undefined,
         private image: Image
     ) {}
@@ -37,6 +77,13 @@ class DockerContainerBuilder implements ContainerBuilder {
         this.stdout = process.stdout;
         this.stderr = process.stderr;
         this.Tty = Boolean(process.stdin.isTTY);
+        return this;
+    }
+
+    env(vars: Record<string, string>): ContainerBuilder {
+        for (const name in vars) {
+            this.Env.push(`${name}=${vars[name]}`);
+        }
         return this;
     }
 
@@ -72,6 +119,15 @@ class DockerContainerBuilder implements ContainerBuilder {
         return this;
     }
 
+    mount(source: string, target: string): ContainerBuilder {
+        this.Mounts.push({
+            Type: "bind",
+            Source: source,
+            Target: target,
+        });
+        return this;
+    }
+
     stdinFrom(stream: NodeJS.ReadableStream): ContainerBuilder {
         this.stdin = stream;
         return this;
@@ -87,15 +143,21 @@ class DockerContainerBuilder implements ContainerBuilder {
         return this;
     }
 
+    whenImageNotFound(handler: ImageNotFoundHandler): ContainerBuilder {
+        this.notFoundHandler = handler;
+        return this;
+    }
+
     async start(cmd: string, args: string[]): Promise<Container> {
         const { image } = this;
-        const { Mounts, NetworkMode, User, WorkingDir, Tty } = this;
+        const { Env, Mounts, NetworkMode, User, WorkingDir, Tty } = this;
         const dockerImage = `${image.name}:${image.tag || "latest"}`;
         const create = () =>
             this.docker.createContainer({
                 name: this.name,
                 AttachStdin: Boolean(this.stdin),
                 Cmd: [cmd, args].flat(),
+                Env,
                 Image: dockerImage,
                 HostConfig: {
                     NetworkMode,
@@ -108,44 +170,14 @@ class DockerContainerBuilder implements ContainerBuilder {
                 WorkingDir,
             });
         const container = await create().catch((err) => {
-            if (err.statusCode === 404) {
-                return this.pullImage(dockerImage).then(create);
+            if (err.statusCode === 404 && this.notFoundHandler) {
+                return this.notFoundHandler(image).then(create);
             }
             throw err;
         });
         await this.attachStreams(container);
         await container.start();
         return new DockerContainer(container);
-    }
-
-    private async pullImage(image: string) {
-        return new Promise((resolve, reject) => {
-            this.events.emit("pull-started", { image });
-            const onFinished = (err: Error | null) => {
-                this.events.emit("pull-completed");
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve();
-                }
-            };
-            const onProgress = (event: any) => {
-                this.events.emit(
-                    "pull-progress",
-                    Object.assign(event, { image })
-                );
-            };
-            this.docker
-                .pull(image, {})
-                .then((stream) => {
-                    this.docker.modem.followProgress(
-                        stream,
-                        onFinished,
-                        onProgress
-                    );
-                })
-                .catch(onFinished);
-        });
     }
 
     private async attachStreams(container: Docker.Container) {
@@ -184,19 +216,36 @@ class DockerContainer implements Container {
         return StatusCode;
     }
 
-    async waitAndRemove(): Promise<number> {
-        try {
-            return await this.wait();
-        } finally {
-            await this.remove();
-        }
-    }
-
-    async commit(): Promise<void> {
-        await this.container.commit();
+    async commit(image: Image): Promise<void> {
+        await this.container.commit({ repo: image.name, tag: image.tag });
     }
 
     async remove(): Promise<void> {
         await this.container.remove();
     }
+}
+
+class DockerImageBuilder implements ImageBuilder {
+    private currentImage?: Image;
+
+    constructor(private engine: Engine, private image: Image) {}
+
+    from = async (image: Image) => {
+        this.currentImage = image;
+    };
+
+    run = async (cmd: string, args: string[]) => {
+        if (!this.currentImage) throw Error("missing fromImage");
+        const { engine, image } = this;
+        const container = await engine
+            .newContainer(`${image.name}-build`, this.currentImage)
+            .attachStdStreams()
+            .whenImageNotFound((image) => engine.pullImage(image))
+            .start(cmd, args);
+        await removeAfter(container, async () => {
+            await waitSuccess(container);
+            await container.commit(image);
+            this.currentImage = image;
+        });
+    };
 }

@@ -3,6 +3,10 @@
 import { ToolDefinitions } from "./definitions";
 
 const definitions: ToolDefinitions = {
+    "ansible-playbook": {
+        path: "./tools/ansible",
+        className: "AnsiblePlaybook",
+    },
     node: {
         path: "./tools/node",
         className: "Node",
