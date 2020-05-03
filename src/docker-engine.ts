@@ -175,7 +175,11 @@ class DockerContainer implements Container {
     constructor(private container: Docker.Container) {}
 
     async wait(): Promise<number> {
-        process.once("SIGINT", () => this.container.kill());
+        process.once("SIGINT", () => {
+            this.container.kill().catch((err) => {
+                if (err.statusCode !== 404) throw err;
+            });
+        });
         const { StatusCode } = await this.container.wait();
         return StatusCode;
     }
