@@ -51,7 +51,9 @@ class DockerContainerBuilder implements ContainerBuilder {
     }
 
     useHostUser(): ContainerBuilder {
-        this.User = `${process.getuid()}:${process.getgid()}`;
+        if (process.getuid) {
+            this.User = `${process.getuid()}:${process.getgid()}`;
+        }
         return this;
     }
 
