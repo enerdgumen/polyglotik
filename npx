@@ -1,2 +1,3 @@
 #!/bin/sh
-exec "./node/bin/node" "./node/lib/node_modules/npm/bin/npx-cli.js" "$@"
+source ./config.sh
+exec $NODE_PATH/node $NODE_MODULES/npm/bin/npx-cli.js "$@"
