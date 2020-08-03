@@ -1,5 +1,5 @@
-import { readFileSync } from "fs";
-import { join, basename } from "path";
+import { existsSync, readFileSync } from "fs";
+import { join, basename, dirname } from "path";
 
 export interface WithProject {
     project: Project;
@@ -28,10 +28,19 @@ export function readProject(): Project {
 }
 
 function readConfig(path: string): any {
-    try {
-        const json = readFileSync(join(path, "polyglotik.json"), "utf8");
-        return JSON.parse(json);
-    } catch (err) {
+    let jsonPath = findFileInParents(path, "polyglotik.json");
+    if (jsonPath === null) {
+        console.warn("polyglotik.json not found!");
         return {};
     }
+    const json = readFileSync(jsonPath, "utf8");
+    return JSON.parse(json);
+}
+
+function findFileInParents(path: string, name: string): string | null {
+    while (!existsSync(join(path, name))) {
+        path = dirname(path);
+        if (path === "/") return null;
+    }
+    return join(path, name);
 }
