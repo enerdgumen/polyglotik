@@ -1,5 +1,5 @@
 #!/bin/sh
 DIR=`dirname $0`/..
 NAME=`basename $0`
-source $DIR/config.sh
-exec "$DIR/node/node" "$DIR/lib/main.js" "$NAME" "$@"
+. $DIR/config.sh
+exec node "$DIR/lib/main.js" "$NAME" "$@"
